@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balatro Odds</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg: #0a0a0b;
+            --surface: #151518;
+            --elevated: #1e1e24;
+            --border: #2a2a32;
+            --text: #f0f0f5;
+            --muted: #6b6b78;
+            --a: #ff5f5f;
+            --b: #ffc46b;
+            --c: #4ecdc4;
+            --either: #a78bfa;
+            --other: #3a3a42;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 20px;
+            line-height: 1.5;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+        
+        .subtitle {
+            color: var(--muted);
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        label {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        input[type="number"] {
+            background: var(--elevated);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            width: 100%;
+        }
+        
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--text);
+        }
+        
+        .tier-a:focus { border-color: var(--a); }
+        .tier-b:focus { border-color: var(--b); }
+        .tier-c:focus { border-color: var(--c); }
+        
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            background: var(--elevated);
+            border-radius: 3px;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--text);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .deck-viz {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-bottom: 24px;
+            min-height: 40px;
+        }
+        
+        .deck-card {
+            width: 24px;
+            height: 32px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+        }
+        
+        .deck-card.a { background: var(--a); color: #000; }
+        .deck-card.b { background: var(--b); color: #000; }
+        .deck-card.c { background: var(--c); color: #000; }
+        .deck-card.other { background: var(--other); }
+        
+        .prob-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+        
+        .prob-cell {
+            background: var(--elevated);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        
+        .prob-cell:hover {
+            transform: translateY(-2px);
+            border-color: var(--text);
+        }
+        
+        .prob-cell:active {
+            transform: translateY(0);
+        }
+        
+        .prob-cell .tier {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        
+        .prob-cell.a .tier { color: var(--a); }
+        .prob-cell.b .tier { color: var(--b); }
+        .prob-cell.c .tier { color: var(--c); }
+        .prob-cell.e .tier { color: var(--either); }
+        
+        .prob-cell .target {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+        
+        .prob-cell .value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .custom-calc {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .custom-title {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .custom-inputs {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .custom-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--elevated);
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        
+        .custom-group span {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .custom-group.a span { color: var(--a); }
+        .custom-group.b span { color: var(--b); }
+        .custom-group.c span { color: var(--c); }
+        
+        .custom-group input {
+            width: 50px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 6px;
+            border-radius: 6px;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .custom-group.error {
+            border-color: var(--a);
+            background: rgba(255, 95, 95, 0.1);
+        }
+        
+        .custom-result {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--elevated);
+            padding: 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        
+        .custom-result.error {
+            border-color: var(--a);
+        }
+        
+        .custom-result.success {
+            border-color: var(--c);
+        }
+        
+        .formula {
+            color: var(--muted);
+            font-size: 14px;
+        }
+        
+        .formula strong {
+            color: var(--text);
+        }
+        
+        .formula .a { color: var(--a); }
+        .formula .b { color: var(--b); }
+        .formula .c { color: var(--c); }
+        
+        .result-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        .result-value.error {
+            color: var(--a);
+            font-size: 14px;
+        }
+        
+        .options {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .option {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--muted);
+            cursor: pointer;
+        }
+        
+        .option input {
+            cursor: pointer;
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Balatro Odds</h1>
+            <div class="subtitle">Probability Calculator</div>
+            
+            <div class="controls">
+                <div class="input-group">
+                    <label>Deck Size</label>
+                    <div class="slider-group">
+                        <input type="number" id="deckNum" value="52" min="1" max="100" onchange="updateFromNum('deck')">
+                        <input type="range" id="deckSlider" min="1" max="100" value="52" oninput="updateFromSlider('deck')">
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label>Cards to Draw</label>
+                    <div class="slider-group">
+                        <input type="number" id="drawNum" value="5" min="1" max="20" onchange="updateFromNum('draw')">
+                        <input type="range" id="drawSlider" min="1" max="20" value="5" oninput="updateFromSlider('draw')">
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label>Tier A Cards</label>
+                    <input type="number" id="tierA" class="tier-a" value="4" min="0" onchange="calculate()">
+                </div>
+                
+                <div class="input-group">
+                    <label>Tier B Cards</label>
+                    <input type="number" id="tierB" class="tier-b" value="4" min="0" onchange="calculate()">
+                </div>
+                
+                <div class="input-group">
+                    <label>Tier C Cards</label>
+                    <input type="number" id="tierC" class="tier-c" value="4" min="0" onchange="calculate()">
+                </div>
+            </div>
+            
+            <div class="deck-viz" id="deckViz"></div>
+            
+            <div class="prob-grid" id="probGrid"></div>
+            
+            <div class="custom-calc">
+                <div class="custom-title">Custom Combination — Click probabilities above</div>
+                <div class="custom-inputs">
+                    <div class="custom-group a" id="cgA">
+                        <span>A</span>
+                        <input type="number" id="wantA" value="1" min="0" onchange="calcCustom()">
+                    </div>
+                    <div class="custom-group b" id="cgB">
+                        <span>B</span>
+                        <input type="number" id="wantB" value="0" min="0" onchange="calcCustom()">
+                    </div>
+                    <div class="custom-group c" id="cgC">
+                        <span>C</span>
+                        <input type="number" id="wantC" value="0" min="0" onchange="calcCustom()">
+                    </div>
+                </div>
+                <div class="custom-result" id="customResult">
+                    <div class="formula" id="formula">Select cards to calculate</div>
+                    <div class="result-value" id="resultValue">--</div>
+                </div>
+            </div>
+            
+            <div class="options">
+                <label class="option"><input type="checkbox" id="showEither" checked onchange="calculate()"> Show Either</label>
+                <label class="option"><input type="checkbox" id="showCombos" checked onchange="calculate()"> Show Combos</label>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Math functions
+        function nCr(n, r) {
+            if (r < 0 || r > n) return 0;
+            if (r === 0 || r === n) return 1;
+            let res = 1;
+            for (let i = 0; i < r; i++) {
+                res = res * (n - i) / (i + 1);
+            }
+            return res;
+        }
+        
+        function hypergeometric(N, K, n, k) {
+            return nCr(K, k) * nCr(N - K, n - k) / nCr(N, n);
+        }
+        
+        function cumulative(N, K, n, minK) {
+            let sum = 0;
+            for (let k = minK; k <= Math.min(K, n); k++) {
+                sum += hypergeometric(N, K, n, k);
+            }
+            return sum;
+        }
+        
+        function exactMulti(N, A, B, C, n, a, b, c) {
+            const other = N - A - B - C;
+            const needOther = n - a - b - c;
+            if (needOther < 0 || needOther > other) return 0;
+            if (a > A || b > B || c > C) return 0;
+            return nCr(A, a) * nCr(B, b) * nCr(C, c) * nCr(other, needOther) / nCr(N, n);
+        }
+        
+        function formatPct(p) {
+            if (p < 0.001) return "<0.1%";
+            if (p > 0.999) return ">99.9%";
+            return (p * 100).toFixed(1) + "%";
+        }
+        
+        // Get current values
+        function getVals() {
+            return {
+                N: parseInt(document.getElementById('deckNum').value) || 52,
+                n: parseInt(document.getElementById('drawNum').value) || 5,
+                A: parseInt(document.getElementById('tierA').value) || 0,
+                B: parseInt(document.getElementById('tierB').value) || 0,
+                C: parseInt(document.getElementById('tierC').value) || 0
+            };
+        }
+        
+        // Update functions
+        function updateFromSlider(type) {
+            const slider = document.getElementById(type + 'Slider');
+            document.getElementById(type + 'Num').value = slider.value;
+            calculate();
+        }
+        
+        function updateFromNum(type) {
+            const num = document.getElementById(type + 'Num');
+            let val = parseInt(num.value) || 1;
+            const slider = document.getElementById(type + 'Slider');
+            val = Math.max(parseInt(slider.min), Math.min(parseInt(slider.max), val));
+            num.value = val;
+            slider.value = val;
+            calculate();
+        }
+        
+        // Set custom values from click
+        function setWant(a, b, c) {
+            document.getElementById('wantA').value = a;
+            document.getElementById('wantB').value = b;
+            document.getElementById('wantC').value = c;
+            calcCustom();
+        }
+        
+        // Main calculation
+        function calculate() {
+            let v = getVals();
+            
+            // Fix overages
+            const totalTier = v.A + v.B + v.C;
+            if (totalTier > v.N) {
+                v.A = Math.floor(v.A * v.N / totalTier);
+                v.B = Math.floor(v.B * v.N / totalTier);
+                v.C = v.N - v.A - v.B;
+                document.getElementById('tierA').value = v.A;
+                document.getElementById('tierB').value = v.B;
+                document.getElementById('tierC').value = v.C;
+            }
+            if (v.n > v.N) {
+                v.n = v.N;
+                document.getElementById('drawNum').value = v.n;
+                document.getElementById('drawSlider').value = v.n;
+            }
+            
+            // Deck visualization
+            const viz = document.getElementById('deckViz');
+            let html = '';
+            for (let i = 0; i < v.A; i++) html += '<div class="deck-card a">A</div>';
+            for (let i = 0; i < v.B; i++) html += '<div class="deck-card b">B</div>';
+            for (let i = 0; i < v.C; i++) html += '<div class="deck-card c">C</div>';
+            const other = Math.min(v.N - v.A - v.B - v.C, 30);
+            for (let i = 0; i < other; i++) html += '<div class="deck-card other"></div>';
+            viz.innerHTML = html;
+            
+            // Probability grid
+            const grid = document.getElementById('probGrid');
+            grid.innerHTML = '';
+            
+            // Individual tiers
+            [['A', v.A], ['B', v.B], ['C', v.C]].forEach(([tier, count]) => {
+                if (count === 0) return;
+                const maxShow = Math.min(5, count, v.n);
+                for (let k = 1; k <= maxShow; k++) {
+                    const prob = cumulative(v.N, count, v.n, k);
+                    const div = document.createElement('div');
+                    div.className = 'prob-cell ' + tier.toLowerCase();
+                    div.innerHTML = `
+                        <div class="tier">${tier}</div>
+                        <div class="target">${k}+</div>
+                        <div class="value">${formatPct(prob)}</div>
+                    `;
+                    div.onclick = () => setWant(tier === 'A' ? k : 0, tier === 'B' ? k : 0, tier === 'C' ? k : 0);
+                    grid.appendChild(div);
+                }
+            });
+            
+            // Either (any tier)
+            if (document.getElementById('showEither').checked && totalTier > 0) {
+                const maxShow = Math.min(5, totalTier, v.n);
+                for (let k = 1; k <= maxShow; k++) {
+                    const prob = cumulative(v.N, totalTier, v.n, k);
+                    const div = document.createElement('div');
+                    div.className = 'prob-cell e';
+                    div.innerHTML = `
+                        <div class="tier">Any</div>
+                        <div class="target">${k}+</div>
+                        <div class="value">${formatPct(prob)}</div>
+                    `;
+                    div.onclick = () => setWant(Math.min(k, v.A), Math.min(k, v.B), Math.min(k, v.C));
+                    grid.appendChild(div);
+                }
+            }
+            
+            // Combos
+            if (document.getElementById('showCombos').checked) {
+                const combos = [];
+                if (v.A > 0 && v.B > 0) {
+                    let prob = 0;
+                    for (let a = 1; a <= Math.min(v.A, v.n); a++) {
+                        for (let b = 1; b <= Math.min(v.B, v.n - a); b++) {
+                            prob += exactMulti(v.N, v.A, v.B, v.C, v.n, a, b, 0);
+                        }
+                    }
+                    combos.push({name: 'A+B', a: 1, b: 1, c: 0, prob});
+                }
+                if (v.A > 0 && v.C > 0) {
+                    let prob = 0;
+                    for (let a = 1; a <= Math.min(v.A, v.n); a++) {
+                        for (let c = 1; c <= Math.min(v.C, v.n - a); c++) {
+                            prob += exactMulti(v.N, v.A, v.B, v.C, v.n, a, 0, c);
+                        }
+                    }
+                    combos.push({name: 'A+C', a: 1, b: 0, c: 1, prob});
+                }
+                if (v.B > 0 && v.C > 0) {
+                    let prob = 0;
+                    for (let b = 1; b <= Math.min(v.B, v.n); b++) {
+                        for (let c = 1; c <= Math.min(v.C, v.n - b); c++) {
+                            prob += exactMulti(v.N, v.A, v.B, v.C, v.n, 0, b, c);
+                        }
+                    }
+                    combos.push({name: 'B+C', a: 0, b: 1, c: 1, prob});
+                }
+                if (v.A > 0 && v.B > 0 && v.C > 0) {
+                    let prob = 0;
+                    for (let a = 1; a <= Math.min(v.A, v.n); a++) {
+                        for (let b = 1; b <= Math.min(v.B, v.n - a); b++) {
+                            for (let c = 1; c <= Math.min(v.C, v.n - a - b); c++) {
+                                prob += exactMulti(v.N, v.A, v.B, v.C, v.n, a, b, c);
+                            }
+                        }
+                    }
+                    combos.push({name: 'A+B+C', a: 1, b: 1, c: 1, prob});
+                }
+                
+                combos.forEach(combo => {
+                    const div = document.createElement('div');
+                    div.className = 'prob-cell';
+                    div.style.border = '1px solid var(--border)';
+                    div.innerHTML = `
+                        <div class="tier" style="color: var(--text)">${combo.name}</div>
+                        <div class="target">1+ each</div>
+                        <div class="value">${formatPct(combo.prob)}</div>
+                    `;
+                    div.onclick = () => setWant(combo.a, combo.b, combo.c);
+                    grid.appendChild(div);
+                });
+            }
+            
+            // Update custom calc with new constraints
+            calcCustom();
+        }
+        
+        // Custom calculator
+        function calcCustom() {
+            const v = getVals();
+            const wantA = parseInt(document.getElementById('wantA').value) || 0;
+            const wantB = parseInt(document.getElementById('wantB').value) || 0;
+            const wantC = parseInt(document.getElementById('wantC').value) || 0;
+            
+            // Clear errors
+            document.getElementById('cgA').classList.remove('error');
+            document.getElementById('cgB').classList.remove('error');
+            document.getElementById('cgC').classList.remove('error');
+            document.getElementById('customResult').classList.remove('error', 'success');
+            
+            // Validate
+            const errors = [];
+            if (wantA > v.A) {
+                errors.push(`Only ${v.A} A available`);
+                document.getElementById('cgA').classList.add('error');
+            }
+            if (wantB > v.B) {
+                errors.push(`Only ${v.B} B available`);
+                document.getElementById('cgB').classList.add('error');
+            }
+            if (wantC > v.C) {
+                errors.push(`Only ${v.C} C available`);
+                document.getElementById('cgC').classList.add('error');
+            }
+            if (wantA + wantB + wantC > v.n) {
+                errors.push(`Can only draw ${v.n}`);
+            }
+            if (wantA + wantB + wantC === 0) {
+                errors.push('Select at least 1 card');
+            }
+            
+            const formula = document.getElementById('formula');
+            const result = document.getElementById('resultValue');
+            
+            if (errors.length > 0) {
+                formula.innerHTML = `<span style="color: var(--a)">${errors.join(' • ')}</span>`;
+                result.textContent = 'Invalid';
+                result.className = 'result-value error';
+                document.getElementById('customResult').classList.add('error');
+                return;
+            }
+            
+            // Calculate
+            const prob = exactMulti(v.N, v.A, v.B, v.C, v.n, wantA, wantB, wantC);
+            
+            // Build formula text
+            const parts = [];
+            if (wantA > 0) parts.push(`<strong class="a">${wantA}A</strong>`);
+            if (wantB > 0) parts.push(`<strong class="b">${wantB}B</strong>`);
+            if (wantC > 0) parts.push(`<strong class="c">${wantC}C</strong>`);
+            
+            formula.innerHTML = `Exactly ${parts.join(' + ')}`;
+            result.textContent = formatPct(prob);
+            result.className = 'result-value';
+            document.getElementById('customResult').classList.add('success');
+        }
+        
+        // Initialize
+        calculate();
+    </script>
+</body>
+</html>
