@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Balatro Odds</title>
+    <title>Draw Calculator</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -56,15 +56,40 @@
         
         .controls {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .deck-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .tier-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            grid-column: 1 / -1;
+        }
+        
+        @media (max-width: 600px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            .deck-controls {
+                grid-template-columns: 1fr 1fr;
+            }
+            .tier-controls {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
         }
         
         .input-group {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 8px;
         }
         
         label {
@@ -75,18 +100,20 @@
             letter-spacing: 0.5px;
         }
         
-        input[type="number"] {
+        .number-input {
             background: var(--elevated);
             border: 1px solid var(--border);
             color: var(--text);
-            padding: 10px;
+            padding: 12px;
             border-radius: 8px;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 16px;
+            font-size: 18px;
             width: 100%;
+            text-align: center;
+            margin-bottom: 8px;
         }
         
-        input[type="number"]:focus {
+        .number-input:focus {
             outline: none;
             border-color: var(--text);
         }
@@ -95,14 +122,8 @@
         .tier-b:focus { border-color: var(--b); }
         .tier-c:focus { border-color: var(--c); }
         
-        .slider-group {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
         input[type="range"] {
-            flex: 1;
+            width: 100%;
             height: 6px;
             background: var(--elevated);
             border-radius: 3px;
@@ -111,8 +132,8 @@
         
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
             background: var(--text);
             border-radius: 50%;
             cursor: pointer;
@@ -142,11 +163,45 @@
         .deck-card.c { background: var(--c); color: #000; }
         .deck-card.other { background: var(--other); }
         
+        .view-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .view-btn {
+            background: var(--elevated);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .view-btn:hover {
+            border-color: var(--text);
+            color: var(--text);
+        }
+        
+        .view-btn.active {
+            background: var(--text);
+            color: var(--bg);
+            border-color: var(--text);
+        }
+        
         .prob-grid {
-            display: grid;
+            display: none;
             grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             gap: 8px;
             margin-bottom: 24px;
+        }
+        
+        .prob-grid.active {
+            display: grid;
         }
         
         .prob-cell {
@@ -190,6 +245,168 @@
             font-family: 'JetBrains Mono', monospace;
             font-size: 20px;
             font-weight: 600;
+        }
+        
+        .bar-graph {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .bar-graph.active {
+            display: flex;
+        }
+        
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--elevated);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        
+        .bar-row:hover {
+            border-color: var(--text);
+            background: var(--bg);
+        }
+        
+        .bar-label {
+            width: 60px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .bar-row.a .bar-label { color: var(--a); }
+        .bar-row.b .bar-label { color: var(--b); }
+        .bar-row.c .bar-label { color: var(--c); }
+        .bar-row.e .bar-label { color: var(--either); }
+        
+        .bar-track {
+            flex: 1;
+            height: 24px;
+            background: var(--bg);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .bar-fill {
+            height: 100%;
+            border-radius: 12px;
+            transition: width 0.4s ease;
+            position: relative;
+        }
+        
+        .bar-row.a .bar-fill { background: linear-gradient(90deg, var(--a), #ff8a8a); }
+        .bar-row.b .bar-fill { background: linear-gradient(90deg, var(--b), #ffd89a); }
+        .bar-row.c .bar-fill { background: linear-gradient(90deg, var(--c), #7eddd6); }
+        .bar-row.e .bar-fill { background: linear-gradient(90deg, var(--either), #c4b5fd); }
+        
+        .bar-value {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            color: #000;
+            text-shadow: 0 0 2px rgba(255,255,255,0.5);
+        }
+        
+        .bar-percent {
+            width: 60px;
+            text-align: right;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .radar-view {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        
+        .radar-view.active {
+            display: flex;
+        }
+        
+        .radar-container {
+            position: relative;
+            width: 350px;
+            height: 350px;
+        }
+        
+        .radar-svg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .radar-axis {
+            stroke: var(--border);
+            stroke-width: 1;
+        }
+        
+        .radar-grid {
+            fill: none;
+            stroke: var(--border);
+            stroke-width: 1;
+            opacity: 0.5;
+        }
+        
+        .radar-area {
+            fill-opacity: 0.3;
+            stroke-width: 2;
+            transition: all 0.4s ease;
+        }
+        
+        .radar-point {
+            r: 4;
+            stroke: var(--surface);
+            stroke-width: 2;
+            transition: all 0.4s ease;
+            cursor: pointer;
+        }
+        
+        .radar-point:hover {
+            r: 6;
+        }
+        
+        .radar-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+        
+        .radar-legend {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .radar-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+        
+        .radar-legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            opacity: 0.7;
         }
         
         .custom-calc {
@@ -320,45 +537,53 @@
 <body>
     <div class="container">
         <div class="card">
-            <h1>Balatro Odds</h1>
+            <h1>Draw Calculator</h1>
             <div class="subtitle">Probability Calculator</div>
             
             <div class="controls">
-                <div class="input-group">
-                    <label>Deck Size</label>
-                    <div class="slider-group">
-                        <input type="number" id="deckNum" value="52" min="1" max="100" onchange="updateFromNum('deck')">
+                <div class="deck-controls">
+                    <div class="input-group">
+                        <label>Deck Size</label>
+                        <input type="number" class="number-input" id="deckNum" value="52" min="1" max="100" onchange="updateFromNum('deck')">
                         <input type="range" id="deckSlider" min="1" max="100" value="52" oninput="updateFromSlider('deck')">
                     </div>
-                </div>
-                
-                <div class="input-group">
-                    <label>Cards to Draw</label>
-                    <div class="slider-group">
-                        <input type="number" id="drawNum" value="5" min="1" max="20" onchange="updateFromNum('draw')">
-                        <input type="range" id="drawSlider" min="1" max="20" value="5" oninput="updateFromSlider('draw')">
+                    
+                    <div class="input-group">
+                        <label>Cards to Draw</label>
+                        <input type="number" class="number-input" id="drawNum" value="5" min="1" max="100" onchange="updateFromNum('draw')">
+                        <input type="range" id="drawSlider" min="1" max="100" value="5" oninput="updateFromSlider('draw')">
                     </div>
                 </div>
                 
-                <div class="input-group">
-                    <label>Tier A Cards</label>
-                    <input type="number" id="tierA" class="tier-a" value="4" min="0" onchange="calculate()">
-                </div>
-                
-                <div class="input-group">
-                    <label>Tier B Cards</label>
-                    <input type="number" id="tierB" class="tier-b" value="4" min="0" onchange="calculate()">
-                </div>
-                
-                <div class="input-group">
-                    <label>Tier C Cards</label>
-                    <input type="number" id="tierC" class="tier-c" value="4" min="0" onchange="calculate()">
+                <div class="tier-controls">
+                    <div class="input-group">
+                        <label>Tier A Cards</label>
+                        <input type="number" class="number-input tier-a" id="tierA" value="4" min="0" onchange="calculate()">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Tier B Cards</label>
+                        <input type="number" class="number-input tier-b" id="tierB" value="0" min="0" onchange="calculate()">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Tier C Cards</label>
+                        <input type="number" class="number-input tier-c" id="tierC" value="0" min="0" onchange="calculate()">
+                    </div>
                 </div>
             </div>
             
             <div class="deck-viz" id="deckViz"></div>
             
+            <div class="view-toggle">
+                <button class="view-btn" onclick="setView('grid')">Grid View</button>
+                <button class="view-btn active" onclick="setView('bars')">Bar Graph</button>
+                <button class="view-btn" onclick="setView('radar')">Radar Chart</button>
+            </div>
+            
             <div class="prob-grid" id="probGrid"></div>
+            <div class="bar-graph active" id="barGraph"></div>
+            <div class="radar-view" id="radarView"></div>
             
             <div class="custom-calc">
                 <div class="custom-title">Custom Combination — Click probabilities above</div>
@@ -383,14 +608,16 @@
             </div>
             
             <div class="options">
-                <label class="option"><input type="checkbox" id="showEither" checked onchange="calculate()"> Show Either</label>
-                <label class="option"><input type="checkbox" id="showCombos" checked onchange="calculate()"> Show Combos</label>
+                <label class="option"><input type="checkbox" id="showEither" onchange="calculate()"> Show Either</label>
+                <label class="option"><input type="checkbox" id="showCombos" onchange="calculate()"> Show Combos</label>
             </div>
         </div>
     </div>
 
     <script>
-        // Math functions
+        let currentView = 'bars';
+        let lastProbs = [];
+        
         function nCr(n, r) {
             if (r < 0 || r > n) return 0;
             if (r === 0 || r === n) return 1;
@@ -427,7 +654,6 @@
             return (p * 100).toFixed(1) + "%";
         }
         
-        // Get current values
         function getVals() {
             return {
                 N: parseInt(document.getElementById('deckNum').value) || 52,
@@ -438,7 +664,6 @@
             };
         }
         
-        // Update functions
         function updateFromSlider(type) {
             const slider = document.getElementById(type + 'Slider');
             document.getElementById(type + 'Num').value = slider.value;
@@ -455,7 +680,25 @@
             calculate();
         }
         
-        // Set custom values from click
+        function setView(view) {
+            currentView = view;
+            document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.getElementById('probGrid').classList.remove('active');
+            document.getElementById('barGraph').classList.remove('active');
+            document.getElementById('radarView').classList.remove('active');
+            
+            if (view === 'grid') {
+                document.getElementById('probGrid').classList.add('active');
+            } else if (view === 'bars') {
+                document.getElementById('barGraph').classList.add('active');
+            } else {
+                document.getElementById('radarView').classList.add('active');
+            }
+            renderView();
+        }
+        
         function setWant(a, b, c) {
             document.getElementById('wantA').value = a;
             document.getElementById('wantB').value = b;
@@ -463,11 +706,183 @@
             calcCustom();
         }
         
-        // Main calculation
+        function renderView() {
+            if (currentView === 'grid') {
+                renderGrid();
+            } else if (currentView === 'bars') {
+                renderBars();
+            } else {
+                renderRadar();
+            }
+        }
+        
+        function renderGrid() {
+            const grid = document.getElementById('probGrid');
+            grid.innerHTML = '';
+            
+            lastProbs.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'prob-cell ' + p.class;
+                div.innerHTML = `
+                    <div class="tier">${p.tier}</div>
+                    <div class="target">${p.target}</div>
+                    <div class="value">${formatPct(p.prob)}</div>
+                `;
+                div.onclick = () => setWant(p.setA, p.setB, p.setC);
+                grid.appendChild(div);
+            });
+        }
+        
+        function renderBars() {
+            const container = document.getElementById('barGraph');
+            container.innerHTML = '';
+            
+            lastProbs.forEach(p => {
+                const row = document.createElement('div');
+                row.className = 'bar-row ' + p.class;
+                row.onclick = () => setWant(p.setA, p.setB, p.setC);
+                
+                const width = Math.max(p.prob * 100, 1);
+                
+                row.innerHTML = `
+                    <div class="bar-label">${p.tier}</div>
+                    <div class="bar-track">
+                        <div class="bar-fill" style="width: ${width}%">
+                            ${width > 15 ? `<span class="bar-value">${formatPct(p.prob)}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="bar-percent">${formatPct(p.prob)}</div>
+                `;
+                container.appendChild(row);
+            });
+        }
+        
+        function renderRadar() {
+            const container = document.getElementById('radarView');
+            container.innerHTML = '';
+            
+            const v = getVals();
+            
+            // Get probabilities for 1, 2, 3, 4, 5 cards
+            const axes = ['1', '2', '3', '4', '5+'];
+            const data = {
+                A: [],
+                B: [],
+                C: []
+            };
+            
+            for (let i = 0; i < 5; i++) {
+                const count = i + 1;
+                if (v.A > 0 && count <= v.A && count <= v.n) {
+                    data.A.push(cumulative(v.N, v.A, v.n, count));
+                } else {
+                    data.A.push(0);
+                }
+                
+                if (v.B > 0 && count <= v.B && count <= v.n) {
+                    data.B.push(cumulative(v.N, v.B, v.n, count));
+                } else {
+                    data.B.push(0);
+                }
+                
+                if (v.C > 0 && count <= v.C && count <= v.n) {
+                    data.C.push(cumulative(v.N, v.C, v.n, count));
+                } else {
+                    data.C.push(0);
+                }
+            }
+            
+            const colors = {
+                A: '#ff5f5f',
+                B: '#ffc46b',
+                C: '#4ecdc4'
+            };
+            
+            const centerX = 175;
+            const centerY = 175;
+            const radius = 120;
+            const angleStep = (2 * Math.PI) / 5;
+            
+            let svgHTML = `<svg class="radar-svg" viewBox="0 0 350 350">`;
+            
+            // Draw grid circles
+            for (let i = 1; i <= 4; i++) {
+                const r = (radius / 4) * i;
+                let points = [];
+                for (let j = 0; j < 5; j++) {
+                    const angle = j * angleStep - Math.PI / 2;
+                    points.push(`${centerX + Math.cos(angle) * r},${centerY + Math.sin(angle) * r}`);
+                }
+                svgHTML += `<polygon class="radar-grid" points="${points.join(' ')}"/>`;
+            }
+            
+            // Draw axes
+            for (let i = 0; i < 5; i++) {
+                const angle = i * angleStep - Math.PI / 2;
+                const x = centerX + Math.cos(angle) * radius;
+                const y = centerY + Math.sin(angle) * radius;
+                svgHTML += `<line class="radar-axis" x1="${centerX}" y1="${centerY}" x2="${x}" y2="${y}"/>`;
+                
+                // Labels
+                const labelX = centerX + Math.cos(angle) * (radius + 25);
+                const labelY = centerY + Math.sin(angle) * (radius + 25);
+                svgHTML += `<text class="radar-label" x="${labelX}" y="${labelY}" fill="#6b6b78">${axes[i]}</text>`;
+            }
+            
+            // Draw data areas
+            ['A', 'B', 'C'].forEach(tier => {
+                if (v[tier] === 0) return;
+                
+                let points = [];
+                let hasData = false;
+                
+                data[tier].forEach((prob, i) => {
+                    if (prob > 0) hasData = true;
+                    const angle = i * angleStep - Math.PI / 2;
+                    const r = prob * radius;
+                    points.push(`${centerX + Math.cos(angle) * r},${centerY + Math.sin(angle) * r}`);
+                });
+                
+                if (hasData) {
+                    svgHTML += `<polygon class="radar-area" points="${points.join(' ')}" 
+                        fill="${colors[tier]}" stroke="${colors[tier]}"/>`;
+                    
+                    // Draw points
+                    data[tier].forEach((prob, i) => {
+                        if (prob > 0) {
+                            const angle = i * angleStep - Math.PI / 2;
+                            const r = prob * radius;
+                            const x = centerX + Math.cos(angle) * r;
+                            const y = centerY + Math.sin(angle) * r;
+                            svgHTML += `<circle class="radar-point" cx="${x}" cy="${y}" fill="${colors[tier]}" 
+                                onclick="setWant(${tier === 'A' ? i + 1 : 0}, ${tier === 'B' ? i + 1 : 0}, ${tier === 'C' ? i + 1 : 0})"/>`;
+                        }
+                    });
+                }
+            });
+            
+            svgHTML += '</svg>';
+            
+            // Legend
+            let legendHTML = '<div class="radar-legend">';
+            ['A', 'B', 'C'].forEach(tier => {
+                if (v[tier] > 0) {
+                    legendHTML += `
+                        <div class="radar-legend-item">
+                            <div class="radar-legend-color" style="background: ${colors[tier]}"></div>
+                            <span>Tier ${tier}</span>
+                        </div>
+                    `;
+                }
+            });
+            legendHTML += '</div>';
+            
+            container.innerHTML = svgHTML + legendHTML;
+        }
+        
         function calculate() {
             let v = getVals();
             
-            // Fix overages
             const totalTier = v.A + v.B + v.C;
             if (totalTier > v.N) {
                 v.A = Math.floor(v.A * v.N / totalTier);
@@ -483,7 +898,6 @@
                 document.getElementById('drawSlider').value = v.n;
             }
             
-            // Deck visualization
             const viz = document.getElementById('deckViz');
             let html = '';
             for (let i = 0; i < v.A; i++) html += '<div class="deck-card a">A</div>';
@@ -493,46 +907,39 @@
             for (let i = 0; i < other; i++) html += '<div class="deck-card other"></div>';
             viz.innerHTML = html;
             
-            // Probability grid
-            const grid = document.getElementById('probGrid');
-            grid.innerHTML = '';
+            lastProbs = [];
             
-            // Individual tiers
             [['A', v.A], ['B', v.B], ['C', v.C]].forEach(([tier, count]) => {
                 if (count === 0) return;
                 const maxShow = Math.min(5, count, v.n);
                 for (let k = 1; k <= maxShow; k++) {
-                    const prob = cumulative(v.N, count, v.n, k);
-                    const div = document.createElement('div');
-                    div.className = 'prob-cell ' + tier.toLowerCase();
-                    div.innerHTML = `
-                        <div class="tier">${tier}</div>
-                        <div class="target">${k}+</div>
-                        <div class="value">${formatPct(prob)}</div>
-                    `;
-                    div.onclick = () => setWant(tier === 'A' ? k : 0, tier === 'B' ? k : 0, tier === 'C' ? k : 0);
-                    grid.appendChild(div);
+                    lastProbs.push({
+                        tier: tier,
+                        target: k + '+',
+                        prob: cumulative(v.N, count, v.n, k),
+                        class: tier.toLowerCase(),
+                        setA: tier === 'A' ? k : 0,
+                        setB: tier === 'B' ? k : 0,
+                        setC: tier === 'C' ? k : 0
+                    });
                 }
             });
             
-            // Either (any tier)
             if (document.getElementById('showEither').checked && totalTier > 0) {
                 const maxShow = Math.min(5, totalTier, v.n);
                 for (let k = 1; k <= maxShow; k++) {
-                    const prob = cumulative(v.N, totalTier, v.n, k);
-                    const div = document.createElement('div');
-                    div.className = 'prob-cell e';
-                    div.innerHTML = `
-                        <div class="tier">Any</div>
-                        <div class="target">${k}+</div>
-                        <div class="value">${formatPct(prob)}</div>
-                    `;
-                    div.onclick = () => setWant(Math.min(k, v.A), Math.min(k, v.B), Math.min(k, v.C));
-                    grid.appendChild(div);
+                    lastProbs.push({
+                        tier: 'Any',
+                        target: k + '+',
+                        prob: cumulative(v.N, totalTier, v.n, k),
+                        class: 'e',
+                        setA: Math.min(k, v.A),
+                        setB: Math.min(k, v.B),
+                        setC: Math.min(k, v.C)
+                    });
                 }
             }
             
-            // Combos
             if (document.getElementById('showCombos').checked) {
                 const combos = [];
                 if (v.A > 0 && v.B > 0) {
@@ -574,38 +981,34 @@
                     combos.push({name: 'A+B+C', a: 1, b: 1, c: 1, prob});
                 }
                 
-                combos.forEach(combo => {
-                    const div = document.createElement('div');
-                    div.className = 'prob-cell';
-                    div.style.border = '1px solid var(--border)';
-                    div.innerHTML = `
-                        <div class="tier" style="color: var(--text)">${combo.name}</div>
-                        <div class="target">1+ each</div>
-                        <div class="value">${formatPct(combo.prob)}</div>
-                    `;
-                    div.onclick = () => setWant(combo.a, combo.b, combo.c);
-                    grid.appendChild(div);
+                combos.forEach(c => {
+                    lastProbs.push({
+                        tier: c.name,
+                        target: '1+ each',
+                        prob: c.prob,
+                        class: '',
+                        setA: c.a,
+                        setB: c.b,
+                        setC: c.c
+                    });
                 });
             }
             
-            // Update custom calc with new constraints
+            renderView();
             calcCustom();
         }
         
-        // Custom calculator
         function calcCustom() {
             const v = getVals();
             const wantA = parseInt(document.getElementById('wantA').value) || 0;
             const wantB = parseInt(document.getElementById('wantB').value) || 0;
             const wantC = parseInt(document.getElementById('wantC').value) || 0;
             
-            // Clear errors
             document.getElementById('cgA').classList.remove('error');
             document.getElementById('cgB').classList.remove('error');
             document.getElementById('cgC').classList.remove('error');
             document.getElementById('customResult').classList.remove('error', 'success');
             
-            // Validate
             const errors = [];
             if (wantA > v.A) {
                 errors.push(`Only ${v.A} A available`);
@@ -630,21 +1033,19 @@
             const result = document.getElementById('resultValue');
             
             if (errors.length > 0) {
-                formula.innerHTML = `<span style="color: var(--a)">${errors.join(' • ')}</span>`;
+                formula.innerHTML = `<span style="color: #ff5f5f">${errors.join(' • ')}</span>`;
                 result.textContent = 'Invalid';
                 result.className = 'result-value error';
                 document.getElementById('customResult').classList.add('error');
                 return;
             }
             
-            // Calculate
             const prob = exactMulti(v.N, v.A, v.B, v.C, v.n, wantA, wantB, wantC);
             
-            // Build formula text
             const parts = [];
-            if (wantA > 0) parts.push(`<strong class="a">${wantA}A</strong>`);
-            if (wantB > 0) parts.push(`<strong class="b">${wantB}B</strong>`);
-            if (wantC > 0) parts.push(`<strong class="c">${wantC}C</strong>`);
+            if (wantA > 0) parts.push(`<strong style="color: #ff5f5f">${wantA}A</strong>`);
+            if (wantB > 0) parts.push(`<strong style="color: #ffc46b">${wantB}B</strong>`);
+            if (wantC > 0) parts.push(`<strong style="color: #4ecdc4">${wantC}C</strong>`);
             
             formula.innerHTML = `Exactly ${parts.join(' + ')}`;
             result.textContent = formatPct(prob);
@@ -652,7 +1053,6 @@
             document.getElementById('customResult').classList.add('success');
         }
         
-        // Initialize
         calculate();
     </script>
 </body>
